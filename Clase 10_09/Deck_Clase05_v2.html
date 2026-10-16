@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clase 05 · Jetpack Compose I · Universidad de Caldas</title>
+<style>
+  :root {
+    --uc-azul: #0F3B57;
+    --uc-azul-dark: #082635;
+    --uc-dorado: #A8842E;
+    --uc-gris-fondo: #F3F2EE;
+    --uc-gris-linea: #D8D4C9;
+    --uc-texto: #262626;
+    --uc-texto-suave: #5B5B5B;
+    --serif: Georgia, 'Times New Roman', Times, serif;
+    --sans: 'Segoe UI', Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; font-family: var(--sans); background: #0A0A0A; color: var(--uc-texto); }
+  .deck { position: relative; width: 100%; height: 100vh; overflow: hidden; }
+  .slide {
+    display: none; flex-direction: column; justify-content: flex-start;
+    position: absolute; inset: 0; padding: 48px 96px 84px 96px;
+    background: var(--uc-gris-fondo); overflow-y: auto;
+  }
+  .slide.active { display: flex; }
+  .slide h1 { font-family: var(--serif); color: var(--uc-azul); font-size: 1.9em; font-weight: 700; margin: 0 0 6px 0; border-left: 4px solid var(--uc-dorado); padding-left: 20px; }
+  .slide h2 { font-family: var(--serif); color: var(--uc-texto-suave); font-size: 1.15em; font-weight: 400; font-style: italic; margin-top: 0; padding-left: 24px; }
+  .slide ul { font-size: 1em; line-height: 1.5; }
+  .slide li { margin-bottom: 6px; }
+  .slide code, .slide pre { background: #1E2A30; color: #EDEAE1; border-radius: 3px; padding: 2px 7px; font-size: 0.85em; font-family: 'Consolas', 'Menlo', monospace; }
+  .slide pre { padding: 14px 18px; overflow-x: auto; line-height: 1.45; border-left: 3px solid var(--uc-dorado); }
+  .kicker { text-transform: uppercase; letter-spacing: 2.5px; color: var(--uc-dorado); font-weight: 600; font-size: 0.75em; }
+  .topbar {
+    position: absolute; top: 0; left: 0; right: 0; height: 5px;
+    background: var(--uc-azul); border-bottom: 1px solid var(--uc-dorado);
+  }
+  .header-inst { display:flex; align-items:center; justify-content:space-between; font-size: 0.7em; color: var(--uc-texto-suave); margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--uc-gris-linea); }
+  .header-inst .marca { font-family: var(--serif); font-weight: bold; color: var(--uc-azul); letter-spacing: 0.5px; }
+  .footer-inst { position:absolute; bottom: 16px; left: 96px; right: 96px; display:flex; justify-content:space-between; font-size:0.7em; color: var(--uc-texto-suave); padding-top: 8px; border-top: 1px solid var(--uc-gris-linea); background: var(--uc-gris-fondo); }
+  .nav-btn {
+    position: fixed; bottom: 22px; z-index: 10; background: transparent; color: var(--uc-gris-fondo); border: 1px solid var(--uc-dorado);
+    width: 40px; height: 40px; font-size: 1.1em; cursor: pointer; font-family: var(--serif);
+  }
+  .nav-btn:hover { background: var(--uc-dorado); color: var(--uc-azul-dark); }
+  #prevBtn { left: 24px; } #nextBtn { right: 24px; }
+  #counter { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%); color: #cfcfcf; font-size: 0.8em; letter-spacing: 1px; }
+  .badge { display:inline-block; background: var(--uc-azul); color:#fff; padding:4px 14px; font-size:0.72em; margin-right:8px; letter-spacing: 0.5px; }
+  .badge.oro { background: transparent; color: var(--uc-dorado); border: 1px solid var(--uc-dorado); }
+  table { border-collapse: collapse; width: 100%; font-size: 0.9em; }
+  th, td { border: 1px solid var(--uc-gris-linea); padding: 5px 12px; text-align: left; }
+  th { background: var(--uc-azul); color: #fff; font-weight: 600; }
+  tr:nth-child(even) td { background: #FBFAF8; }
+  .cover { align-items: flex-start; justify-content: center; background: var(--uc-azul-dark); color: #EDEAE1; }
+  .cover h1 { color: #fff; border-left: 4px solid var(--uc-dorado); font-size: 2.5em; font-family: var(--serif); }
+  .cover h2 { color: #C9C4B6; }
+  .cover .escudo { font-family: var(--serif); font-size: 1.3em; letter-spacing: 3px; border: 1px solid var(--uc-dorado); color: var(--uc-dorado); padding: 6px 18px; margin-bottom: 22px; display:inline-block; }
+  .cover .kicker { color: var(--uc-dorado); }
+</style>
+</head>
+<body>
+<div class="deck">
+  <div class="topbar"></div>
+
+  <div class="slide active cover">
+    <div class="escudo">UC</div>
+    <div class="kicker">Universidad de Caldas · Facultad de Ingeniería · Programa de Ingeniería de Sistemas y Computación</div>
+    <h1>UI Moderna: Jetpack Compose I</h1>
+    <h2>Interfaces declarativas: Composables, estado y recomposición</h2>
+    <p>Programación para Dispositivos Móviles &middot; Unidad 2 — Interfaces de Usuario &middot; Semana 5</p>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Objetivos</div>
+    <h1>¿Qué vas a saber hacer al terminar?</h1>
+
+        <ul>
+          <li>Explicar la diferencia entre programación <strong>imperativa</strong> (XML + <code>findViewById</code>) y <strong>declarativa</strong> (Compose)</li>
+          <li>Escribir funciones <code>@Composable</code> con <code>Text</code>, <code>Column</code>, <code>Row</code>, <code>Box</code>, <code>Spacer</code> y <code>Button</code></li>
+          <li>Aplicar <code>Modifier</code> entendiendo que <strong>el orden cambia el resultado</strong></li>
+          <li>Manejar estado con <code>remember</code> y <code>mutableStateOf</code>, y explicar qué dispara una <strong>recomposición</strong></li>
+          <li>Elegir entre <code>remember</code> y <code>rememberSaveable</code> según el caso</li>
+          <li>Diagnosticar por qué una lista mutable normal <strong>no</strong> actualiza la pantalla</li>
+        </ul>
+    <div class="footer-inst"><span>Kotlin / Jetpack Compose</span><span>Clase 5 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Agenda</div>
+    <h1>¿Qué vamos a ver hoy?</h1>
+
+        <table>
+        <tr><th>Bloque</th><th>Contenido</th><th>Min</th></tr>
+        <tr><td>0</td><td>Apertura: el problema de la UI imperativa</td><td>15</td></tr>
+        <tr><td>1</td><td>Declarativo vs imperativo · primer Composable · <code>@Preview</code></td><td>35</td></tr>
+        <tr><td>2</td><td>Layout: <code>Column</code>, <code>Row</code>, <code>Box</code> · <code>Modifier</code> y su orden</td><td>30</td></tr>
+        <tr><td>—</td><td>Receso</td><td>15</td></tr>
+        <tr><td>3</td><td>Estado y recomposición · evidencia con Logcat</td><td>45</td></tr>
+        <tr><td>4</td><td>Material Design 3: tema, tipografía, <code>Card</code>, <code>TextField</code></td><td>25</td></tr>
+        <tr><td>5</td><td>Puente al taller: <code>rememberSaveable</code> y el bug de las listas</td><td>15</td></tr>
+        </table>
+        <p><span class="badge">Extensión</span> Con 4.ª hora: <em>state hoisting</em>, listas reactivas y animación.</p>
+    <div class="footer-inst"><span>Kotlin / Jetpack Compose</span><span>Clase 5 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Lo esencial</div>
+    <h1>Los 3 conceptos que no pueden quedar ambiguos</h1>
+
+        <ol>
+          <li><strong>Composable = función que describe UI.</strong><br>
+          No "crea" un objeto de interfaz: describe cómo debería verse para un estado dado, y puede volver a ejecutarse.</li>
+          <li><strong>Estado = dato que, al cambiar, hace que la UI se vuelva a dibujar.</strong><br>
+          <code>remember</code> lo conserva entre recomposiciones; <code>rememberSaveable</code> lo conserva incluso si la Activity se destruye (rotación).</li>
+          <li><strong>Modifier = cadena ordenada de configuraciones.</strong><br>
+          El orden cambia el resultado.</li>
+        </ol>
+        <p>Si al final de la clase puedes explicar estos tres con tus propias palabras, la clase cumplió su objetivo.</p>
+    <div class="footer-inst"><span>Kotlin / Jetpack Compose</span><span>Clase 5 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Bloque 0 · Apertura</div>
+    <h1>El problema: la UI a mano</h1>
+
+        <pre>// Forma "clásica" (imperativa) — Clase 04
+val tvNombre = findViewById&lt;TextView&gt;(R.id.tvNombre)
+val btnSumar = findViewById&lt;Button&gt;(R.id.btnSumar)
+var contador = 0
+
+btnSumar.setOnClickListener {
+    contador++
+    tvNombre.text = "Publicaciones: $contador"   // hay que ACORDARSE
+}</pre>
+        <p><strong>¿Qué pasa si olvidas la línea <code>tvNombre.text = ...</code>?</strong> El dato cambia, pero la pantalla no.</p>
+        <p>El programador es responsable de mantener sincronizados <em>el dato</em> y <em>la pantalla</em>. Ese es el problema central del enfoque imperativo.</p>
+    <div class="footer-inst"><span>Kotlin / Jetpack Compose</span><span>Clase 5 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Bloque 0 · Apertura</div>
+    <h1>La idea de Compose</h1>
+
+        <pre>// Forma declarativa — Compose
+var contador by remember { mutableStateOf(0) }
+
+Text(text = "Publicaciones: $contador")
+Button(onClick = { contador++ }) { Text("+") }</pre>
+        <p>Aquí <strong>no le dices a la pantalla qué hacer</strong>. Describes <strong>cómo se ve la pantalla para un valor de <code>contador</code></strong>.</p>
+        <p>Cuando <code>contador</code> cambia, Compose vuelve a ejecutar la descripción. <strong>Nunca tocas la vista.</strong></p>
+    <div class="footer-inst"><span>Kotlin / Jetpack Compose</span><span>Clase 5 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Bloque 1 · Concepto</div>
+    <h1>Comparación directa</h1>
+
+        <table>
+        <tr><th>Pregunta</th><th>Views/XML (imperativo)</th><th>Compose (declarativo)</th></tr>
+        <tr><td>¿Dónde se define la UI?</td><td>En XML (<code>activity_main.xml</code>)</td><td>En funciones Kotlin</td></tr>
+        <tr><td>¿Cómo se conecta con el código?</td><td><code>findViewById(R.id...)</code></td><td>No se conecta: es el mismo código</td></tr>
+        <tr><td>¿Cómo se actualiza?</td><td>Tú llamas <code>setText</code>, <code>setVisibility</code>...</td><td>Cambias el estado y Compose recompone</td></tr>
+        <tr><td>¿Cómo se reutiliza?</td><td><code>&lt;include&gt;</code>, layouts duplicados</td><td>Llamas la función con otros parámetros</td></tr>
+        <tr><td>¿Cómo se previsualiza?</td><td>Preview del layout XML</td><td><code>@Preview</code> sobre el Composable</td></tr>
+        </table>
+    <div class="footer-inst"><span>Kotlin / Jetpack Compose</span><span>Clase 5 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Bloque 1 · Concepto</div>
+    <h1>La UI es código Kotlin normal</h1>
+
+        <p>Como la UI es código, puedes usar <code>if</code>, <code>for</code> y <code>when</code> dentro de ella. Mostrar u ocultar algo ya no es <code>setVisibility(View.GONE)</code>:</p>
+        <pre>if (editando) {
+    FormularioEdicion()
+}</pre>
+        <p>Y reutilizar es simplemente llamar una función con otros parámetros:</p>
+        <pre>SaludoScreen(nombre = "Ana")
+SaludoScreen(nombre = "Carlos")</pre>
+        <p>Esto es lo que hace a Compose tan potente: <strong>no hay un lenguaje aparte para la interfaz</strong>.</p>
+    <div class="footer-inst"><span>Kotlin / Jetpack Compose</span><span>Clase 5 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Bloque 1 · Primer Composable</div>
+    <h1>setContent reemplaza setContentView</h1>
+
+        <pre>class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            MaterialTheme {
+                SaludoScreen(nombre = "Universidad de Caldas")
+            }
+        }
+    }
+}</pre>
+        <p><code>setContent { }</code> es el reemplazo directo de <code>setContentView(R.layout.activity_main)</code>. Ya no hay XML que inflar.</p>
+    <div class="footer-inst"><span>Kotlin / Jetpack Compose</span><span>Clase 5 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Bloque 1 · Primer Composable</div>
+    <h1>Tu primer Composable</h1>
+
+        <pre>@Composable
+fun SaludoScreen(nombre: String) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "Hola, $nombre",
+            style = MaterialTheme.typography.headlineSmall
+        )
+    }
+}</pre>
+        <p>Si el IDE marca <code>Column</code> o <code>Text</code> en rojo, es un <strong>import faltante</strong>: <code>Alt</code>+<code>Enter</code> / <code>Option</code>+<code>Enter</code>. Es el error #1 al empezar.</p>
+    <div class="footer-inst"><span>Kotlin / Jetpack Compose</span><span>Clase 5 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Bloque 1 · Concepto</div>
+    <h1>@Composable: las 3 reglas de oro</h1>
+
+        <p><code>@Composable</code> le dice al compilador: <em>"esta función no devuelve nada, pero describe UI"</em>.</p>
+        <ol>
+          <li>Un Composable <strong>no devuelve un valor</strong> (devuelve <code>Unit</code>).</li>
+          <li>Solo puedes llamar a un Composable desde <strong>otro Composable</strong>.</li>
+          <li>Por convención se nombran en <strong>PascalCase</strong> (<code>SaludoScreen</code>), como si fueran tipos.</li>
+        </ol>
+        <p>Por eso el compilador la trata distinto: le permite llamar a otras funciones <code>@Composable</code> y le inyecta el motor de recomposición.</p>
+    <div class="footer-inst"><span>Kotlin / Jetpack Compose</span><span>Clase 5 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Bloque 1 · Iteración rápida</div>
+    <h1>@Preview: diseña sin recompilar</h1>
+
+        <pre>@Preview(showBackground = true, name = "Saludo")
+@Composable
+fun SaludoScreenPreview() {
+    MaterialTheme {
+        SaludoScreen(nombre = "Universidad de Caldas")
+    }
+}</pre>
+        <ul>
+          <li>Dibuja el Composable en el panel de previsualización del IDE</li>
+          <li><strong>No se ejecuta en la app</strong>: la función <code>XxxPreview</code> no se llama desde <code>setContent</code></li>
+          <li>Cambia un <code>padding</code> y observa el resultado al instante, sin instalar en el emulador</li>
+        </ul>
+        <p>Es la herramienta que más tiempo te va a ahorrar en el taller.</p>
+    <div class="footer-inst"><span>Kotlin / Jetpack Compose</span><span>Clase 5 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Bloque 2 · Layout</div>
+    <h1>Los tres contenedores</h1>
+
+        <pre>Column  → apila hijos VERTICALMENTE    (uno debajo de otro)
+Row     → alinea hijos HORIZONTALMENTE (uno al lado de otro)
+Box     → SUPERPONE hijos              (uno encima de otro, como capas)</pre>
+        <pre>Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+    Text("Estoy en una Column (arriba)")
+
+    Row(modifier = Modifier.fillMaxWidth()) {
+        Text("Izquierda")
+        Spacer(modifier = Modifier.width(16.dp))
+        Text("Derecha")
+    }
+
+    Box(modifier = Modifier.size(120.dp)) {
+        Text("Capa de abajo")
+        Text("Capa de arriba", modifier = Modifier.align(Alignment.BottomEnd))
+    }
+}</pre>
+    <div class="footer-inst"><span>Kotlin / Jetpack Compose</span><span>Clase 5 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Bloque 2 · Layout</div>
+    <h1>Spacer y alineación</h1>
+
+        <p><code>Spacer</code> es un Composable vacío cuyo único propósito es ocupar espacio:</p>
+        <pre>Spacer(modifier = Modifier.height(16.dp))   // espacio vertical
+Spacer(modifier = Modifier.width(16.dp))    // espacio horizontal</pre>
+        <pre>Column(
+    horizontalAlignment = Alignment.CenterHorizontally,  // eje horizontal
+    verticalArrangement = Arrangement.Center             // eje vertical
+) { /* ... */ }</pre>
+        <ul>
+          <li>En <code>Column</code>: <code>horizontalAlignment</code> + <code>verticalArrangement</code></li>
+          <li>En <code>Row</code> es al revés: <code>verticalAlignment</code> + <code>horizontalArrangement</code></li>
+        </ul>
+        <p><strong>¿Por qué importa <code>Box</code>?</strong> Es la única forma de poner un texto <em>encima</em> de un círculo. Lo usarás para el avatar del taller.</p>
+    <div class="footer-inst"><span>Kotlin / Jetpack Compose</span><span>Clase 5 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Bloque 2 · Modifier</div>
+    <h1>Modifier: el orden importa</h1>
+
+        <p><strong>Versión A — <code>padding</code> antes de <code>background</code>:</strong></p>
+        <pre>Modifier
+    .fillMaxWidth()
+    .padding(16.dp)                  // primero el padding
+    .background(Color(0xFFF3F2EE))   // luego el fondo</pre>
+        <p>El fondo <strong>no</strong> cubre los 16 dp de padding: queda un margen sin color alrededor.</p>
+        <p><strong>Versión B — <code>background</code> antes de <code>padding</code>:</strong></p>
+        <pre>Modifier
+    .fillMaxWidth()
+    .background(Color(0xFFF3F2EE))   // primero el fondo
+    .padding(16.dp)                  // luego el padding</pre>
+        <p>El fondo <strong>sí</strong> cubre todo el ancho, y el texto queda con aire adentro.</p>
+        <p>Un <code>Modifier</code> se aplica de arriba hacia abajo, como capas de cebolla: <strong>el primero envuelve a los siguientes</strong>.</p>
+    <div class="footer-inst"><span>Kotlin / Jetpack Compose</span><span>Clase 5 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Bloque 2 · Modifier</div>
+    <h1>Modificadores esenciales</h1>
+
+        <table>
+        <tr><th>Modifier</th><th>Qué hace</th></tr>
+        <tr><td><code>fillMaxSize()</code></td><td>Ocupa todo el ancho y alto disponibles</td></tr>
+        <tr><td><code>fillMaxWidth()</code></td><td>Ocupa todo el ancho disponible</td></tr>
+        <tr><td><code>size(120.dp)</code></td><td>Tamaño fijo</td></tr>
+        <tr><td><code>padding(16.dp)</code></td><td>Espacio <strong>alrededor</strong> del contenido</td></tr>
+        <tr><td><code>background(color)</code></td><td>Pinta el fondo</td></tr>
+        <tr><td><code>clip(CircleShape)</code></td><td>Recorta a una forma</td></tr>
+        <tr><td><code>border(2.dp, color, shape)</code></td><td>Dibuja un borde</td></tr>
+        <tr><td><code>clickable { }</code></td><td>Hace clickeable cualquier Composable</td></tr>
+        <tr><td><code>weight(1f)</code></td><td>Reparte el espacio <strong>dentro de</strong> <code>Row</code>/<code>Column</code></td></tr>
+        <tr><td><code>align(a)</code></td><td>Alinea <strong>dentro de</strong> un <code>Box</code></td></tr>
+        </table>
+        <p><strong>Ojo con <code>weight</code>:</strong> solo funciona dentro de <code>Row</code> o <code>Column</code>. Dentro de un <code>Box</code> no compila.</p>
+    <div class="footer-inst"><span>Kotlin / Jetpack Compose</span><span>Clase 5 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Práctico 1</div>
+    <h1>Ejercicio guiado: tarjeta de perfil estática</h1>
+
+        <pre>Box(
+    modifier = Modifier
+        .size(96.dp)
+        .clip(CircleShape)
+        .background(MaterialTheme.colorScheme.primaryContainer),
+    contentAlignment = Alignment.Center
+) {
+    Text(
+        text = "AG",
+        style = MaterialTheme.typography.headlineMedium,
+        color = MaterialTheme.colorScheme.onPrimaryContainer
+    )
+}</pre>
+        <ol>
+          <li>Crea una <code>Column</code> con el avatar, el nombre y la carrera</li>
+          <li>El avatar debe ser un <strong>círculo</strong> con las iniciales centradas</li>
+          <li>No agregues interactividad todavía: solo el layout visual</li>
+          <li>Itera con <code>@Preview</code>, sin instalar en el emulador</li>
+        </ol>
+        <p><strong>El orden es obligatorio:</strong> <code>.size()</code> → <code>.clip()</code> → <code>.background()</code>. Si pones <code>background</code> antes de <code>clip</code>, el fondo será cuadrado.</p>
+    <div class="footer-inst"><span>Kotlin / Jetpack Compose</span><span>Clase 5 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Bloque 3 · Estado</div>
+    <h1>El problema: las variables normales no avisan</h1>
+
+        <pre>@Composable
+fun ContadorRoto() {
+    var contador = 0          // variable normal: Compose NO la observa
+
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(text = "Contador: $contador")
+        Button(onClick = { contador++ }) { Text("+") }
+    }
+}</pre>
+        <p><strong>¿Por qué al presionar + no cambia nada en pantalla?</strong></p>
+        <ol>
+          <li><code>contador</code> es una variable local de Kotlin. Compose <strong>no tiene forma de saber</strong> que cambió.</li>
+          <li>Aunque lo supiera, la función ya terminó de ejecutarse: <strong>nadie la vuelve a llamar</strong>.</li>
+        </ol>
+    <div class="footer-inst"><span>Kotlin / Jetpack Compose</span><span>Clase 5 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Bloque 3 · Estado</div>
+    <h1>La solución: remember + mutableStateOf</h1>
+
+        <pre>@Composable
+fun ContadorScreen() {
+    var contador by remember { mutableStateOf(0) }
+
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(text = "Contador: $contador",
+             style = MaterialTheme.typography.headlineMedium)
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row {
+            Button(onClick = { contador-- }) { Text("-") }
+            Spacer(modifier = Modifier.width(16.dp))
+            Button(onClick = { contador++ }) { Text("+") }
+        }
+    }
+}</pre>
+    <div class="footer-inst"><span>Kotlin / Jetpack Compose</span><span>Clase 5 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Bloque 3 · Estado</div>
+    <h1>Descompón la línea clave</h1>
+
+        <pre>var contador  by  remember { mutableStateOf(0) }
+     |         |      |            |
+     |         |      |            +-- valor inicial + contenedor observable
+     |         |      +-- "recuerda este valor entre recomposiciones"
+     |         +-- delegado: permite contador++ en vez de contador.value++
+     +-- variable local que lee el valor actual</pre>
+        <ul>
+          <li><code>mutableStateOf(0)</code> → crea un <strong>contenedor observable</strong>. Compose se suscribe a él.</li>
+          <li><code>remember { }</code> → guarda ese contenedor en la memoria del Composable. <strong>Sin <code>remember</code>, cada recomposición crearía uno nuevo y volvería a 0.</strong></li>
+          <li><code>by</code> → azúcar sintáctico. Sin <code>by</code> escribirías <code>contador.value++</code>.</li>
+        </ul>
+        <pre>// La misma cosa sin `by`
+val contador = remember { mutableStateOf(0) }
+Text(text = "Contador: ${contador.value}")
+Button(onClick = { contador.value++ }) { Text("+") }</pre>
+        <p><strong>Error común:</strong> mezclar las dos formas. Si usas <code>by</code>, necesitas <code>import androidx.compose.runtime.getValue</code> y <code>setValue</code>.</p>
+    <div class="footer-inst"><span>Kotlin / Jetpack Compose</span><span>Clase 5 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Bloque 3 · Recomposición</div>
+    <h1>¿Qué es una recomposición?</h1>
+
+        <pre>1. Compose ejecuta ContadorScreen()  → lee contador (0) → dibuja "Contador: 0"
+2. El usuario presiona "+"
+3. onClick ejecuta contador++  → mutableStateOf notifica el cambio
+4. Compose sabe QUÉ Composables leyeron ese estado → los marca como sucios
+5. Compose vuelve a ejecutar SOLO esos Composables → dibuja "Contador: 1"</pre>
+        <ul>
+          <li>Compose observa qué estado lee cada Composable</li>
+          <li>Cuando ese estado cambia, solo se vuelve a ejecutar (recompone) lo necesario</li>
+          <li><strong>No se redibuja toda la pantalla</strong>: es eficiente por diseño, no por optimización manual</li>
+        </ul>
+    <div class="footer-inst"><span>Kotlin / Jetpack Compose</span><span>Clase 5 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Bloque 3 · Demo en vivo</div>
+    <h1>Evidencia de recomposición con Logcat</h1>
+
+        <pre>@Composable
+fun ContadorScreen() {
+    var contador by remember { mutableStateOf(0) }
+    Log.d("Recomposicion", "ContadorScreen se ejecutó con contador=$contador")
+    // ...
+}
+
+@Composable
+fun EncabezadoFijo() {
+    Log.d("Recomposicion", "EncabezadoFijo se ejecutó (solo una vez)")
+    Text("Mi perfil", style = MaterialTheme.typography.titleLarge)
+}</pre>
+        <p>Filtra Logcat por <code>Recomposicion</code> y presiona "+" varias veces:</p>
+        <ul>
+          <li>El log del contador <strong>se repite</strong> en cada click</li>
+          <li>El log del encabezado <strong>no se repite</strong>: no leyó ese estado</li>
+        </ul>
+        <p>Ese contraste es la prueba de que Compose solo recompone lo necesario.</p>
+    <div class="footer-inst"><span>Kotlin / Jetpack Compose</span><span>Clase 5 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Práctico 2</div>
+    <h1>Ejercicio guiado: pantalla de contador completa</h1>
+
+        <pre>Card(
+    modifier = Modifier.fillMaxWidth().padding(16.dp),
+    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text("Publicaciones", style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "$contador",
+            style = MaterialTheme.typography.displaySmall,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Row {
+            Button(onClick = { contador-- }) { Text("-") }
+            Spacer(modifier = Modifier.width(16.dp))
+            Button(onClick = { contador++ }) { Text("+") }
+        }
+    }
+}</pre>
+        <ul>
+          <li>Encabezado + contador + botones <code>+</code>/<code>-</code></li>
+          <li>Verifica en Logcat que la recomposición ocurre solo al cambiar el contador</li>
+          <li>Envuelve todo en una <code>Card</code> con <code>MaterialTheme.colorScheme</code></li>
+        </ul>
+    <div class="footer-inst"><span>Kotlin / Jetpack Compose</span><span>Clase 5 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Bloque 4 · Material 3</div>
+    <h1>MaterialTheme: el sistema de diseño</h1>
+
+        <p><code>MaterialTheme</code> es un <strong>proveedor de valores de diseño</strong>. Todo lo que está dentro de él puede leer:</p>
+        <pre>MaterialTheme.colorScheme.primary          // color principal de la marca
+MaterialTheme.colorScheme.onPrimary        // color de texto SOBRE primary
+MaterialTheme.colorScheme.surfaceVariant   // fondo suave
+MaterialTheme.colorScheme.onSurfaceVariant // texto sobre ese fondo
+MaterialTheme.typography.headlineSmall     // escala tipográfica
+MaterialTheme.typography.bodyMedium</pre>
+        <p>La convención <code>onX</code> significa <strong>"color de contenido que va ENCIMA de X"</strong>. Usar <code>onPrimary</code> sobre <code>primary</code> garantiza contraste correcto en modo claro y oscuro automáticamente.</p>
+        <p><strong>Demo:</strong> cambia <code>primary</code> por <code>tertiary</code> y observa cómo cambia el color sin tocar nada más.</p>
+    <div class="footer-inst"><span>Kotlin / Jetpack Compose</span><span>Clase 5 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Bloque 4 · Material 3</div>
+    <h1>Escala tipográfica</h1>
+
+        <p>No uses <code>fontSize</code> a mano. Usa la escala del tema:</p>
+        <table>
+        <tr><th>Estilo</th><th>Uso típico</th></tr>
+        <tr><td><code>displaySmall</code></td><td>Números grandes (contadores)</td></tr>
+        <tr><td><code>headlineSmall</code> / <code>headlineMedium</code></td><td>Título de pantalla, nombre de usuario</td></tr>
+        <tr><td><code>titleLarge</code> / <code>titleMedium</code></td><td>Títulos de sección, encabezados de tarjeta</td></tr>
+        <tr><td><code>bodyLarge</code> / <code>bodyMedium</code></td><td>Texto de contenido</td></tr>
+        <tr><td><code>labelSmall</code></td><td>Etiquetas y textos auxiliares</td></tr>
+        </table>
+        <p>Ventaja: si cambias el tema, toda la jerarquía visual se ajusta sola.</p>
+    <div class="footer-inst"><span>Kotlin / Jetpack Compose</span><span>Clase 5 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Bloque 4 · Material 3</div>
+    <h1>Card</h1>
+
+        <pre>Card(
+    modifier = Modifier
+        .fillMaxWidth()
+        .padding(16.dp),
+    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+) {
+    Column(modifier = Modifier.padding(16.dp)) {
+        Text(text = nombre, style = MaterialTheme.typography.titleLarge)
+        Text(text = carrera, style = MaterialTheme.typography.bodyMedium)
+    }
+}</pre>
+        <p><code>Card</code> es un <code>Surface</code> con forma, elevación y color de contenedor.</p>
+        <p><strong>El padding va adentro</strong> (en el <code>Column</code> interno), no en la <code>Card</code>, para que el color de fondo llegue hasta el borde.</p>
+    <div class="footer-inst"><span>Kotlin / Jetpack Compose</span><span>Clase 5 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Bloque 4 · Material 3</div>
+    <h1>Botones: jerarquía de acciones</h1>
+
+        <pre>Button(onClick = { /* ... */ }) { Text("Guardar") }          // relleno, acción principal
+OutlinedButton(onClick = { /* ... */ }) { Text("Cancelar") } // contorno, acción secundaria
+TextButton(onClick = { /* ... */ }) { Text("Ver más") }      // sin fondo, acción terciaria</pre>
+        <p><strong>Botón deshabilitado</strong> (lo necesitas para el bonus del taller):</p>
+        <pre>Button(
+    onClick = { contador-- },
+    enabled = contador &gt; 0        // se ve gris y no responde al click
+) { Text("-") }</pre>
+        <p>Usa la jerarquía para comunicar importancia: <strong>una sola acción principal por pantalla</strong>.</p>
+    <div class="footer-inst"><span>Kotlin / Jetpack Compose</span><span>Clase 5 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Bloque 4 · Material 3</div>
+    <h1>TextField: componente controlado</h1>
+
+        <pre>var texto by remember { mutableStateOf("") }
+
+OutlinedTextField(
+    value = texto,
+    onValueChange = { texto = it },
+    label = { Text("Nombre") },
+    singleLine = true,
+    modifier = Modifier.fillMaxWidth()
+)</pre>
+        <ul>
+          <li>Tú eres dueño del texto (<code>value</code>); el campo te avisa de cada cambio (<code>onValueChange</code>)</li>
+          <li>Si no actualizas el estado en <code>onValueChange</code>, el campo <strong>no acepta escritura</strong></li>
+          <li>El campo no guarda nada por sí solo: <strong>tú eres el dueño del estado</strong></li>
+        </ul>
+    <div class="footer-inst"><span>Kotlin / Jetpack Compose</span><span>Clase 5 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Bloque 5 · Estado persistente</div>
+    <h1>remember vs rememberSaveable</h1>
+
+        <p><strong>El experimento:</strong> con <code>remember</code>, llega a 5, rota el emulador. El contador <strong>vuelve a 0</strong>.</p>
+        <table>
+        <tr><th></th><th><code>remember</code></th><th><code>rememberSaveable</code></th></tr>
+        <tr><td>Sobrevive a recomposición</td><td>Sí</td><td>Sí</td></tr>
+        <tr><td>Sobrevive a rotación</td><td><strong>No</strong></td><td><strong>Sí</strong></td></tr>
+        <tr><td>Sobrevive a muerte del proceso</td><td>No</td><td>Sí (vía <code>Bundle</code>)</td></tr>
+        <tr><td>Mecanismo</td><td>Memoria de la composición</td><td>Bundle de estado de la Activity</td></tr>
+        </table>
+        <pre>var contador by rememberSaveable { mutableStateOf(0) }</pre>
+        <p>Rotar destruye y recrea la Activity (Clase 04). <code>remember</code> no sobrevive a eso; <code>rememberSaveable</code> sí.</p>
+        <p><strong>Regla práctica:</strong> si al usuario le molestaría perderlo, usa <code>rememberSaveable</code>.</p>
+    <div class="footer-inst"><span>Kotlin / Jetpack Compose</span><span>Clase 5 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Bloque 5 · Bug clásico</div>
+    <h1>La lista que no se actualiza</h1>
+
+        <pre>// NO funciona: Compose no observa un ArrayList normal
+val logros = remember { mutableListOf("Primer commit") }
+logros.add("Nuevo logro")   // la pantalla no cambia
+
+// SÍ funciona: lista observable
+val logros = remember { mutableStateListOf("Primer commit") }
+logros.add("Nuevo logro")   // dispara recomposición</pre>
+        <p><code>mutableListOf</code> devuelve un <code>ArrayList</code> común. Compose <strong>no lo observa</strong>: la referencia es la misma, así que "nada cambió".</p>
+        <p><code>remember</code> evita que la lista se recree, pero <strong>no la vuelve observable</strong>. Ese es el bug de la Parte 2 del taller.</p>
+        <p><strong>Alternativa:</strong> <code>var logros by remember { mutableStateOf(listOf(...)) }</code> y reasignar con <code>logros = logros + x</code>.</p>
+    <div class="footer-inst"><span>Kotlin / Jetpack Compose</span><span>Clase 5 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Extensión A</div>
+    <h1>Estado elevado (state hoisting)</h1>
+
+        <p>Un componente reutilizable <strong>no debería tener su propio estado</strong>. Debe recibir el valor y devolver eventos.</p>
+        <pre>@Composable
+fun ContadorPublicaciones(
+    valor: Int,
+    onIncrementar: () -&gt; Unit,
+    onDecrementar: () -&gt; Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
+        Button(onClick = onDecrementar, enabled = valor &gt; 0) { Text("-") }
+        Text(text = "$valor", style = MaterialTheme.typography.displaySmall)
+        Button(onClick = onIncrementar) { Text("+") }
+    }
+}</pre>
+        <p>El estado <strong>sube</strong> al padre: <code>var publicaciones by rememberSaveable { mutableStateOf(0) }</code>.</p>
+        <p><strong>La frase que debes recordar:</strong> <em>"El estado baja, los eventos suben."</em> Es la base de MVVM (Clase 08).</p>
+    <div class="footer-inst"><span>Kotlin / Jetpack Compose</span><span>Clase 5 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Extensión C</div>
+    <h1>Animación y modo oscuro</h1>
+
+        <pre>import androidx.compose.animation.AnimatedVisibility
+
+var editando by rememberSaveable { mutableStateOf(false) }
+
+Button(onClick = { editando = !editando }) {
+    Text(if (editando) "Cancelar" else "Editar perfil")
+}
+
+AnimatedVisibility(visible = editando) {
+    OutlinedTextField(
+        value = borrador,
+        onValueChange = { borrador = it },
+        label = { Text("Nombre") },
+        modifier = Modifier.fillMaxWidth()
+    )
+}</pre>
+        <ul>
+          <li><code>AnimatedVisibility</code> recibe un <code>Boolean</code> y anima la entrada/salida de su contenido</li>
+          <li>Por defecto usa <em>fade</em> + <em>expand</em>; el hijo no sabe nada de la animación</li>
+          <li><strong>Modo oscuro:</strong> cambia el tema del emulador. Si usaste <code>MaterialTheme.colorScheme</code>, la pantalla se adapta sola</li>
+        </ul>
+    <div class="footer-inst"><span>Kotlin / Jetpack Compose</span><span>Clase 5 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Errores comunes</div>
+    <h1>Qué vigilar hoy</h1>
+
+        <table>
+        <tr><th>Síntoma</th><th>Causa y solución</th></tr>
+        <tr><td><code>Unresolved reference: Column</code></td><td>Falta el import → <code>Alt</code>+<code>Enter</code></td></tr>
+        <tr><td>El botón no hace nada visible</td><td>Variable normal → <code>remember { mutableStateOf(0) }</code></td></tr>
+        <tr><td>El contador vuelve a 0 al rotar</td><td>Se usó <code>remember</code> → <code>rememberSaveable</code></td></tr>
+        <tr><td>El contador se reinicia en cada click</td><td>Falta <code>remember</code></td></tr>
+        <tr><td>Error con <code>by</code></td><td>Faltan <code>getValue</code> / <code>setValue</code></td></tr>
+        <tr><td>El <code>TextField</code> no deja escribir</td><td>No se actualiza <code>value</code> en <code>onValueChange</code></td></tr>
+        <tr><td>La lista no se actualiza</td><td><code>mutableListOf</code> → <code>mutableStateListOf</code></td></tr>
+        <tr><td>El fondo no cubre el padding</td><td>Orden de <code>Modifier</code></td></tr>
+        <tr><td><code>weight</code> no compila</td><td>Se usó fuera de <code>Row</code>/<code>Column</code></td></tr>
+        </table>
+    <div class="footer-inst"><span>Kotlin / Jetpack Compose</span><span>Clase 5 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Entregable</div>
+    <h1>Taller 4: pantalla de perfil de usuario</h1>
+
+        <ul>
+          <li>Avatar circular, nombre, carrera y contador de publicaciones</li>
+          <li>Modo edición con <code>TextField</code> que actualiza el nombre en tiempo real</li>
+          <li>Contador con <code>rememberSaveable</code>: debe sobrevivir a la rotación</li>
+          <li>Corregir el bug de <code>mutableListOf</code> en la lista de logros</li>
+          <li>Al menos 3 <code>Modifier</code> distintos justificados</li>
+          <li><code>ANALISIS.md</code>: predicción, diagnóstico y explicación técnica</li>
+        </ul>
+        <table>
+        <tr><th>Criterio</th><th>Puntos</th></tr>
+        <tr><td>Layout estático completo</td><td>15</td></tr>
+        <tr><td>Diagnóstico y corrección del bug</td><td>25</td></tr>
+        <tr><td><code>rememberSaveable</code> comprobado con evidencia</td><td>30</td></tr>
+        <tr><td>Validación de nombre no vacío</td><td>10</td></tr>
+        <tr><td><code>ANALISIS.md</code>: calidad de las justificaciones</td><td>20</td></tr>
+        <tr><td>Bonus (animación y pulido)</td><td>+15</td></tr>
+        </table>
+    <div class="footer-inst"><span>Kotlin / Jetpack Compose</span><span>Clase 5 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Cierre</div>
+    <h1>Resumen: la fórmula de tres partes</h1>
+
+        <p style="font-size:1.3em; font-family:var(--serif); color:var(--uc-azul);">
+          <strong>Composable = función + estado + Modifier.</strong>
+        </p>
+        <p>La función <strong>describe</strong>, el estado <strong>dispara</strong>, el Modifier <strong>configura</strong>.</p>
+        <table>
+        <tr><th>Concepto</th><th>En una frase</th></tr>
+        <tr><td><code>@Composable</code></td><td>Función que describe UI; se puede volver a ejecutar</td></tr>
+        <tr><td><code>remember</code></td><td>Guarda un valor mientras el Composable permanece en pantalla</td></tr>
+        <tr><td><code>rememberSaveable</code></td><td>Igual, pero sobrevive a la rotación</td></tr>
+        <tr><td><code>mutableStateOf</code></td><td>Contenedor que notifica a Compose cuando cambia</td></tr>
+        <tr><td><code>mutableStateListOf</code></td><td>Lista observable: sus cambios sí disparan recomposición</td></tr>
+        <tr><td>Recomposición</td><td>Volver a ejecutar los Composables cuyo estado leído cambió</td></tr>
+        <tr><td><code>Modifier</code></td><td>Cadena ordenada de configuraciones</td></tr>
+        </table>
+    <div class="footer-inst"><span>Kotlin / Jetpack Compose</span><span>Clase 5 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Cierre</div>
+    <h1>Para la próxima clase</h1>
+
+        <ul>
+          <li><strong>Taller 4:</strong> pantalla de perfil de usuario completa en Compose</li>
+          <li>Trae tu <code>ANALISIS.md</code> con la predicción inicial y el diagnóstico del bug</li>
+          <li><strong>Clase 6:</strong> listas eficientes con <code>LazyColumn</code> y navegación entre pantallas con Navigation Compose</li>
+        </ul>
+        <p><span class="badge oro">Antes de irte</span> Responde en una frase: ¿qué dispara una recomposición?</p>
+    <div class="footer-inst"><span>Kotlin / Jetpack Compose</span><span>Clase 5 de 15</span></div>
+  </div>
+
+
+</div>
+<button id="prevBtn" class="nav-btn" onclick="cambiar(-1)">&#8249;</button>
+<button id="nextBtn" class="nav-btn" onclick="cambiar(1)">&#8250;</button>
+<div id="counter"></div>
+<script>
+  const slides = document.querySelectorAll('.slide');
+  let idx = 0;
+  function mostrar() {
+    slides.forEach((s, i) => s.classList.toggle('active', i === idx));
+    document.getElementById('counter').textContent = (idx + 1) + ' / ' + slides.length;
+  }
+  function cambiar(delta) {
+    idx = Math.max(0, Math.min(slides.length - 1, idx + delta));
+    mostrar();
+  }
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ') cambiar(1);
+    if (e.key === 'ArrowLeft') cambiar(-1);
+  });
+  mostrar();
+</script>
+</body>
+</html>

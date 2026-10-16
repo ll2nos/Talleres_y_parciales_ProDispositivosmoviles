@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deck Clase 08 v2 — Arquitectura MVVM</title>
+<style>
+  :root {
+    --uc-azul: #0F3B57;
+    --uc-azul-dark: #082635;
+    --uc-dorado: #A8842E;
+    --uc-gris-fondo: #F3F2EE;
+    --uc-gris-linea: #D8D4C9;
+    --uc-texto: #262626;
+    --uc-texto-suave: #5B5B5B;
+    --serif: Georgia, 'Times New Roman', Times, serif;
+    --sans: 'Segoe UI', Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; font-family: var(--sans); background: #0A0A0A; color: var(--uc-texto); }
+  .deck { position: relative; width: 100%; height: 100vh; overflow: hidden; }
+  .slide {
+    display: none; flex-direction: column; justify-content: flex-start;
+    position: absolute; inset: 0; padding: 48px 96px 84px 96px;
+    background: var(--uc-gris-fondo); overflow-y: auto;
+  }
+  .slide.active { display: flex; }
+  .slide h1 { font-family: var(--serif); color: var(--uc-azul); font-size: 1.9em; font-weight: 700; margin: 0 0 6px 0; border-left: 4px solid var(--uc-dorado); padding-left: 20px; }
+  .slide h2 { font-family: var(--serif); color: var(--uc-texto-suave); font-size: 1.15em; font-weight: 400; font-style: italic; margin-top: 0; padding-left: 24px; }
+  .slide ul { font-size: 1em; line-height: 1.5; }
+  .slide li { margin-bottom: 6px; }
+  .slide code, .slide pre { background: #1E2A30; color: #EDEAE1; border-radius: 3px; padding: 2px 7px; font-size: 0.85em; font-family: 'Consolas', 'Menlo', monospace; }
+  .slide pre { padding: 14px 18px; overflow-x: auto; line-height: 1.45; border-left: 3px solid var(--uc-dorado); }
+  .kicker { text-transform: uppercase; letter-spacing: 2.5px; color: var(--uc-dorado); font-weight: 600; font-size: 0.75em; }
+  .topbar {
+    position: absolute; top: 0; left: 0; right: 0; height: 5px;
+    background: var(--uc-azul); border-bottom: 1px solid var(--uc-dorado);
+  }
+  .header-inst { display:flex; align-items:center; justify-content:space-between; font-size: 0.7em; color: var(--uc-texto-suave); margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--uc-gris-linea); }
+  .header-inst .marca { font-family: var(--serif); font-weight: bold; color: var(--uc-azul); letter-spacing: 0.5px; }
+  .footer-inst { position:absolute; bottom: 16px; left: 96px; right: 96px; display:flex; justify-content:space-between; font-size:0.7em; color: var(--uc-texto-suave); padding-top: 8px; border-top: 1px solid var(--uc-gris-linea); background: var(--uc-gris-fondo); }
+  .nav-btn {
+    position: fixed; bottom: 22px; z-index: 10; background: transparent; color: var(--uc-gris-fondo); border: 1px solid var(--uc-dorado);
+    width: 40px; height: 40px; font-size: 1.1em; cursor: pointer; font-family: var(--serif);
+  }
+  .nav-btn:hover { background: var(--uc-dorado); color: var(--uc-azul-dark); }
+  #prevBtn { left: 24px; } #nextBtn { right: 24px; }
+  #counter { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%); color: #cfcfcf; font-size: 0.8em; letter-spacing: 1px; }
+  .badge { display:inline-block; background: var(--uc-azul); color:#fff; padding:4px 14px; font-size:0.72em; margin-right:8px; letter-spacing: 0.5px; }
+  .badge.oro { background: transparent; color: var(--uc-dorado); border: 1px solid var(--uc-dorado); }
+  table { border-collapse: collapse; width: 100%; font-size: 0.9em; }
+  th, td { border: 1px solid var(--uc-gris-linea); padding: 5px 12px; text-align: left; }
+  th { background: var(--uc-azul); color: #fff; font-weight: 600; }
+  tr:nth-child(even) td { background: #FBFAF8; }
+  .cover { align-items: flex-start; justify-content: center; background: var(--uc-azul-dark); color: #EDEAE1; }
+  .cover h1 { color: #fff; border-left: 4px solid var(--uc-dorado); font-size: 2.5em; font-family: var(--serif); }
+  .cover h2 { color: #C9C4B6; }
+  .cover .escudo { font-family: var(--serif); font-size: 1.3em; letter-spacing: 3px; border: 1px solid var(--uc-dorado); color: var(--uc-dorado); padding: 6px 18px; margin-bottom: 22px; display:inline-block; }
+  .cover .kicker { color: var(--uc-dorado); }
+</style>
+</head>
+<body>
+<div class="deck">
+  <div class="topbar"></div>
+
+  <div class="slide active cover">
+    <div class="escudo">UC</div>
+    <div class="kicker">Universidad de Caldas · Facultad de Ingeniería · Programa de Ingeniería de Sistemas y Computación</div>
+    <h1>Arquitectura MVVM</h1>
+    <h2>Separando la lógica de negocio de la interfaz</h2>
+    <p>Programación para Dispositivos Móviles &middot; Unidad 3 — Arquitectura y Gestión de Datos &middot; Semana 8</p>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Objetivos</div>
+    <h1>¿Qué vas a saber hacer al terminar?</h1>
+
+        <ul>
+          <li>Explicar por qué poner la lógica dentro de un Composable es un problema</li>
+          <li>Separar una pantalla en <strong>Model</strong>, <strong>ViewModel</strong> y <strong>View</strong></li>
+          <li>Exponer estado con <code>StateFlow</code> y consumirlo con <code>collectAsState</code></li>
+          <li>Usar <code>viewModelScope</code> para lanzar trabajo asíncrono</li>
+          <li>Mantener el estado a través de la rotación gracias al ViewModel</li>
+          <li>Diagnosticar el bug de la UI que no se actualiza por exponer una lista mutable</li>
+        </ul>
+    <div class="footer-inst"><span>MVVM</span><span>Clase 8 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Agenda</div>
+    <h1>¿Qué vamos a ver hoy?</h1>
+
+        <table>
+        <tr><th>Bloque</th><th>Contenido</th><th>Min</th></tr>
+        <tr><td>0</td><td>Apertura: la pantalla que lo hace todo</td><td>15</td></tr>
+        <tr><td>1</td><td>MVVM: los tres roles y la dirección de las dependencias</td><td>30</td></tr>
+        <tr><td>2</td><td><code>ViewModel</code> y <code>viewModelScope</code></td><td>30</td></tr>
+        <tr><td>—</td><td>Receso</td><td>15</td></tr>
+        <tr><td>3</td><td><code>StateFlow</code> y <code>collectAsState</code></td><td>40</td></tr>
+        <tr><td>4</td><td>Refactorizar una pantalla a MVVM</td><td>35</td></tr>
+        <tr><td>5</td><td>Puente al taller: el bug de la lista mutable</td><td>15</td></tr>
+        </table>
+        <p><span class="badge">Extensión</span> Con 4.ª hora: <em>state hoisting</em> y eventos de UI.</p>
+    <div class="footer-inst"><span>MVVM</span><span>Clase 8 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Lo esencial</div>
+    <h1>Los 3 conceptos que no pueden quedar ambiguos</h1>
+
+        <ol>
+          <li><strong>ViewModel = dueño del estado de la pantalla.</strong><br>
+          Sobrevive a la rotación porque no está atado al ciclo de vida de la Activity.</li>
+          <li><strong>StateFlow = flujo observable con un valor actual.</strong><br>
+          La View no pregunta "¿cómo está el estado?": se suscribe y reacciona cuando cambia.</li>
+          <li><strong>La View no decide nada.</strong><br>
+          Solo dibuja el estado que recibe y emite eventos hacia arriba. Toda la lógica vive en el ViewModel.</li>
+        </ol>
+        <p>Si al final de la clase puedes explicar estos tres con tus propias palabras, la clase cumplió su objetivo.</p>
+    <div class="footer-inst"><span>MVVM</span><span>Clase 8 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Bloque 0 · Apertura</div>
+    <h1>La pantalla que lo hace todo</h1>
+
+        <pre>@Composable
+fun PantallaProductos() {
+    var productos by remember { mutableStateOf(listOf&lt;Producto&gt;()) }
+    var cargando by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        cargando = true
+        productos = api.getProductos()   // lógica de red en la UI
+        cargando = false
+    }
+    // ... 200 líneas más mezclando UI y negocio
+}</pre>
+        <ul>
+          <li>La lógica de negocio está mezclada con el dibujo</li>
+          <li>No se puede testear sin levantar la UI</li>
+          <li>Al rotar, todo el estado se pierde</li>
+        </ul>
+    <div class="footer-inst"><span>MVVM</span><span>Clase 8 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Bloque 0 · Apertura</div>
+    <h1>Los tres problemas concretos</h1>
+
+        <table>
+        <tr><th>Problema</th><th>Consecuencia</th></tr>
+        <tr><td>Lógica mezclada con UI</td><td>Cambiar una regla de negocio obliga a tocar el dibujo</td></tr>
+        <tr><td>Sin separación de capas</td><td>No se puede testear sin emulador</td></tr>
+        <tr><td>Estado en el Composable</td><td>Se pierde al rotar (Clase 4)</td></tr>
+        </table>
+        <p>MVVM resuelve los tres con una sola idea: <strong>separar quién tiene los datos de quién los dibuja</strong>.</p>
+    <div class="footer-inst"><span>MVVM</span><span>Clase 8 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Bloque 1 · MVVM</div>
+    <h1>MVVM: los tres roles</h1>
+
+        <table>
+        <tr><th>Capa</th><th>Responsabilidad</th><th>Conoce a</th></tr>
+        <tr><td><strong>Model</strong></td><td>Datos y reglas de negocio (repositorios, entidades)</td><td>Nada de UI</td></tr>
+        <tr><td><strong>ViewModel</strong></td><td>Estado de la pantalla y lógica de presentación</td><td>Model</td></tr>
+        <tr><td><strong>View</strong></td><td>Dibujar el estado y emitir eventos</td><td>ViewModel</td></tr>
+        </table>
+        <p>La dirección de las dependencias es <strong>View → ViewModel → Model</strong>. Nunca al revés.</p>
+    <div class="footer-inst"><span>MVVM</span><span>Clase 8 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Bloque 1 · MVVM</div>
+    <h1>El flujo de datos</h1>
+
+        <pre>        EVENTO (usuario toca un botón)
+              |
+              v
+    +---------------------+
+    |        VIEW         |  dibuja el estado
+    +---------------------+
+              |  llama a un método
+              v
+    +---------------------+
+    |      VIEWMODEL      |  actualiza el estado
+    +---------------------+
+              |  pide datos
+              v
+    +---------------------+
+    |        MODEL        |  repositorio / API / BD
+    +---------------------+
+              |
+              v
+        NUEVO ESTADO  ->  la View se recompone</pre>
+        <p>El ciclo es unidireccional: <strong>los eventos suben, el estado baja</strong>.</p>
+    <div class="footer-inst"><span>MVVM</span><span>Clase 8 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Bloque 1 · MVVM</div>
+    <h1>Por qué el ViewModel sobrevive a la rotación</h1>
+
+        <table>
+        <tr><th>Componente</th><th>Vive durante</th></tr>
+        <tr><td>Composable</td><td>Mientras está en pantalla</td></tr>
+        <tr><td>Activity</td><td>Hasta que se destruye (rotación incluida)</td></tr>
+        <tr><td><strong>ViewModel</strong></td><td><strong>Hasta que la pantalla se cierra definitivamente</strong></td></tr>
+        </table>
+        <p>El <code>ViewModel</code> está atado al <em>ciclo de vida de la pantalla</em>, no al de la Activity. Por eso sobrevive a la rotación: la Activity se recrea, pero el ViewModel se reutiliza.</p>
+        <p>Cuando el usuario sale de la pantalla de verdad, el ViewModel se destruye y su <code>viewModelScope</code> se cancela.</p>
+    <div class="footer-inst"><span>MVVM</span><span>Clase 8 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Bloque 2 · ViewModel</div>
+    <h1>El ViewModel</h1>
+
+        <pre>class ProductosViewModel(
+    private val repository: ProductoRepository
+) : ViewModel() {
+
+    private val _productos = MutableStateFlow&lt;List&lt;Producto&gt;&gt;(emptyList())
+    val productos: StateFlow&lt;List&lt;Producto&gt;&gt; = _productos.asStateFlow()
+
+    private val _cargando = MutableStateFlow(false)
+    val cargando: StateFlow&lt;Boolean&gt; = _cargando.asStateFlow()
+
+    fun cargar() {
+        viewModelScope.launch {
+            _cargando.value = true
+            _productos.value = repository.obtenerProductos()
+            _cargando.value = false
+        }
+    }
+}</pre>
+    <div class="footer-inst"><span>MVVM</span><span>Clase 8 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Bloque 2 · ViewModel</div>
+    <h1>El patrón del estado privado</h1>
+
+        <pre>private val _productos = MutableStateFlow&lt;List&lt;Producto&gt;&gt;(emptyList())
+val productos: StateFlow&lt;List&lt;Producto&gt;&gt; = _productos.asStateFlow()</pre>
+        <ul>
+          <li><code>_productos</code> es <strong>privado y mutable</strong>: solo el ViewModel lo modifica</li>
+          <li><code>productos</code> es <strong>público y de solo lectura</strong>: la View solo observa</li>
+        </ul>
+        <p>Este patrón se repite en todos los ViewModels del curso. Es la forma de garantizar que la UI no pueda corromper el estado.</p>
+    <div class="footer-inst"><span>MVVM</span><span>Clase 8 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Bloque 2 · ViewModel</div>
+    <h1>viewModelScope</h1>
+
+        <pre>fun cargar() {
+    viewModelScope.launch {
+        _cargando.value = true
+        _productos.value = repository.obtenerProductos()
+        _cargando.value = false
+    }
+}</pre>
+        <p><code>viewModelScope</code> es un alcance de corrutinas atado al ViewModel: si el ViewModel se destruye, el trabajo en curso se <strong>cancela automáticamente</strong>. Evita fugas de memoria.</p>
+        <table>
+        <tr><th>Scope</th><th>Se cancela cuando</th></tr>
+        <tr><td><code>viewModelScope</code></td><td>El ViewModel se destruye</td></tr>
+        <tr><td><code>lifecycleScope</code></td><td>La Activity/Fragment se destruye</td></tr>
+        <tr><td><code>rememberCoroutineScope()</code></td><td>El Composable sale de la composición</td></tr>
+        </table>
+    <div class="footer-inst"><span>MVVM</span><span>Clase 8 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Bloque 3 · StateFlow</div>
+    <h1>StateFlow: el estado observable</h1>
+
+        <pre>private val _productos = MutableStateFlow&lt;List&lt;Producto&gt;&gt;(emptyList())
+val productos: StateFlow&lt;List&lt;Producto&gt;&gt; = _productos.asStateFlow()</pre>
+        <table>
+        <tr><th>Característica</th><th>Qué significa</th></tr>
+        <tr><td>Siempre tiene un valor</td><td>Se inicializa con uno; nunca está "vacío"</td></tr>
+        <tr><td>Emite el valor actual al suscribirse</td><td>La UI no necesita pedirlo aparte</td></tr>
+        <tr><td>Solo emite si el valor cambió</td><td>Compara por igualdad antes de notificar</td></tr>
+        <tr><td>Es de solo lectura</td><td><code>asStateFlow()</code> oculta la parte mutable</td></tr>
+        </table>
+    <div class="footer-inst"><span>MVVM</span><span>Clase 8 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Bloque 3 · StateFlow</div>
+    <h1>La View consume el estado</h1>
+
+        <pre>@Composable
+fun PantallaProductos(viewModel: ProductosViewModel = viewModel()) {
+
+    val productos by viewModel.productos.collectAsState()
+    val cargando by viewModel.cargando.collectAsState()
+
+    if (cargando) {
+        CircularProgressIndicator()
+    } else {
+        LazyColumn {
+            items(productos, key = { it.id }) { producto -&gt;
+                FilaProducto(producto)
+            }
+        }
+    }
+}</pre>
+        <p><code>collectAsState()</code> convierte el <code>StateFlow</code> en estado de Compose: cuando el flujo emite, la UI se recompone.</p>
+    <div class="footer-inst"><span>MVVM</span><span>Clase 8 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Bloque 3 · StateFlow</div>
+    <h1>collectAsState vs collectAsStateWithLifecycle</h1>
+
+        <table>
+        <tr><th></th><th><code>collectAsState()</code></th><th><code>collectAsStateWithLifecycle()</code></th></tr>
+        <tr><td>Recolecta cuando</td><td>Siempre que el Composable esté compuesto</td><td>Solo cuando la pantalla está visible</td></tr>
+        <tr><td>Consumo en segundo plano</td><td>Sí</td><td>No</td></tr>
+        <tr><td>Dependencia</td><td><code>compose-runtime</code></td><td><code>lifecycle-runtime-compose</code></td></tr>
+        </table>
+        <p>En este curso usamos <code>collectAsState()</code> por simplicidad. En producción, <code>collectAsStateWithLifecycle()</code> ahorra batería.</p>
+    <div class="footer-inst"><span>MVVM</span><span>Clase 8 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Práctico 1</div>
+    <h1>Ejercicio guiado: refactorizar a MVVM</h1>
+
+        <pre>// ANTES: todo en el Composable
+@Composable
+fun PantallaCursos() {
+    var cursos by remember { mutableStateOf(listOf&lt;Curso&gt;()) }
+    LaunchedEffect(Unit) { cursos = repo.obtenerCursos() }
+    LazyColumn { items(cursos) { Text(it.nombre) } }
+}
+
+// DESPUÉS: separado en capas
+class CursosViewModel(private val repo: CursoRepository) : ViewModel() {
+    private val _cursos = MutableStateFlow&lt;List&lt;Curso&gt;&gt;(emptyList())
+    val cursos: StateFlow&lt;List&lt;Curso&gt;&gt; = _cursos.asStateFlow()
+
+    init { cargar() }
+
+    private fun cargar() {
+        viewModelScope.launch { _cursos.value = repo.obtenerCursos() }
+    }
+}</pre>
+        <ol>
+          <li>Toma una pantalla con lógica embebida (Clase 6)</li>
+          <li>Extrae el estado a un <code>ViewModel</code></li>
+          <li>Expón el estado con <code>StateFlow</code> usando el patrón del estado privado</li>
+          <li>Consume el estado en la View con <code>collectAsState</code></li>
+          <li>Rota el emulador y verifica que el estado <strong>sobrevive</strong></li>
+        </ol>
+    <div class="footer-inst"><span>MVVM</span><span>Clase 8 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Práctico 2</div>
+    <h1>Ejercicio guiado: eventos hacia el ViewModel</h1>
+
+        <pre>class ContadorViewModel : ViewModel() {
+    private val _contador = MutableStateFlow(0)
+    val contador: StateFlow&lt;Int&gt; = _contador.asStateFlow()
+
+    fun incrementar() { _contador.value++ }
+    fun decrementar() { if (_contador.value &gt; 0) _contador.value-- }
+    fun reiniciar() { _contador.value = 0 }
+}
+
+@Composable
+fun PantallaContador(viewModel: ContadorViewModel = viewModel()) {
+    val contador by viewModel.contador.collectAsState()
+
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text("$contador", style = MaterialTheme.typography.displaySmall)
+        Row {
+            Button(onClick = { viewModel.decrementar() }) { Text("-") }
+            Button(onClick = { viewModel.incrementar() }) { Text("+") }
+            TextButton(onClick = { viewModel.reiniciar() }) { Text("Reiniciar") }
+        }
+    }
+}</pre>
+        <p>La View <strong>no sabe</strong> cómo se modifica el contador: solo llama métodos. Toda la regla vive en el ViewModel.</p>
+    <div class="footer-inst"><span>MVVM</span><span>Clase 8 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Bloque 4 · Integración</div>
+    <h1>La estructura de carpetas MVVM</h1>
+
+        <pre>com.ucaldas.miapp/
+├── data/
+│   └── repository/
+│       └── ProductoRepository.kt
+├── model/
+│   └── Producto.kt
+└── ui/
+    ├── screens/
+    │   └── PantallaProductos.kt
+    └── viewmodel/
+        └── ProductosViewModel.kt</pre>
+        <p>Esta separación es la base de la <strong>Clean Architecture</strong> que veremos en la Clase 13.</p>
+    <div class="footer-inst"><span>MVVM</span><span>Clase 8 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Diagnóstico</div>
+    <h1>El bug de la lista mutable</h1>
+
+        <pre>// MAL: la UI no se actualiza
+private val _items = MutableStateFlow(mutableListOf&lt;String&gt;())
+
+fun agregar(item: String) {
+    _items.value.add(item)   // muta la lista sin emitir un nuevo valor
+}</pre>
+        <p><strong>Síntoma:</strong> agregas un elemento y la pantalla no cambia.</p>
+        <p><strong>Causa:</strong> <code>StateFlow</code> compara por referencia. Si mutas la misma lista, el valor "no cambió" y no emite.</p>
+        <pre>// BIEN: se crea una lista nueva
+_items.value = _items.value + item</pre>
+    <div class="footer-inst"><span>MVVM</span><span>Clase 8 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Diagnóstico</div>
+    <h1>Los 3 errores más comunes</h1>
+
+        <table>
+        <tr><th>Síntoma</th><th>Causa</th></tr>
+        <tr><td>La UI no se actualiza al agregar</td><td>Se mutó la lista en vez de reemplazarla</td></tr>
+        <tr><td>El estado se pierde al rotar</td><td>El estado vive en el Composable, no en el ViewModel</td></tr>
+        <tr><td>Crash al salir de la pantalla</td><td>Se lanzó trabajo fuera de <code>viewModelScope</code></td></tr>
+        </table>
+        <p>Los tres se evitan con la misma disciplina: el ViewModel es el único dueño del estado.</p>
+    <div class="footer-inst"><span>MVVM</span><span>Clase 8 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Errores comunes</div>
+    <h1>Qué vigilar hoy</h1>
+
+        <table>
+        <tr><th>Síntoma</th><th>Causa y solución</th></tr>
+        <tr><td>La lista no se actualiza al agregar</td><td>Mutaste la lista → reemplázala con <code>+</code></td></tr>
+        <tr><td>El estado se pierde al rotar</td><td>El estado está en el Composable → muévelo al ViewModel</td></tr>
+        <tr><td><code>Unresolved reference: viewModel</code></td><td>Falta <code>lifecycle-viewmodel-compose</code></td></tr>
+        <tr><td>El ViewModel se recrea en cada recomposición</td><td>No lo obtuviste con <code>viewModel()</code></td></tr>
+        <tr><td>La UI se actualiza dos veces</td><td>Dos <code>collectAsState</code> sobre el mismo flujo</td></tr>
+        <tr><td>El trabajo sigue tras cerrar la pantalla</td><td>Se usó un scope distinto a <code>viewModelScope</code></td></tr>
+        <tr><td><code>Cannot access '_items': it is private</code></td><td>La View intentó modificar el estado: debe llamar un método</td></tr>
+        <tr><td>El estado inicial es null</td><td><code>StateFlow</code> siempre requiere un valor inicial</td></tr>
+        </table>
+    <div class="footer-inst"><span>MVVM</span><span>Clase 8 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Entregable</div>
+    <h1>Taller 6: refactorización a MVVM</h1>
+
+        <ul>
+          <li><strong>Predicción antes de codificar:</strong> ¿qué pasa si mutas la lista en vez de reemplazarla?</li>
+          <li>Implementa la versión con el bug a propósito</li>
+          <li>Reproduce y documenta con Logcat</li>
+          <li>Diagnostica la causa técnica</li>
+          <li>Corrige y verifica</li>
+          <li>Entrega <code>ANALISIS.md</code> con la justificación</li>
+        </ul>
+        <table>
+        <tr><th>Criterio</th><th>Puntos</th></tr>
+        <tr><td>ViewModel con patrón de estado privado</td><td>25</td></tr>
+        <tr><td>View sin lógica de negocio</td><td>20</td></tr>
+        <tr><td>Estado sobrevive a la rotación (con evidencia)</td><td>20</td></tr>
+        <tr><td>Diagnóstico y corrección del bug</td><td>25</td></tr>
+        <tr><td><code>ANALISIS.md</code>: calidad de las justificaciones</td><td>10</td></tr>
+        <tr><td>Penalización por uso de <code>!!</code></td><td>−10 por ocurrencia</td></tr>
+        </table>
+    <div class="footer-inst"><span>MVVM</span><span>Clase 8 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Cierre</div>
+    <h1>Resumen: separar para escalar</h1>
+
+        <p style="font-size:1.3em; font-family:var(--serif); color:var(--uc-azul);">
+          <strong>El estado baja, los eventos suben.</strong>
+        </p>
+        <table>
+        <tr><th>Concepto</th><th>En una frase</th></tr>
+        <tr><td>MVVM</td><td>Model, ViewModel y View con dependencias en una sola dirección</td></tr>
+        <tr><td><code>ViewModel</code></td><td>Dueño del estado; sobrevive a la rotación</td></tr>
+        <tr><td><code>viewModelScope</code></td><td>Scope que se cancela al destruirse el ViewModel</td></tr>
+        <tr><td><code>StateFlow</code></td><td>Flujo observable con valor actual</td></tr>
+        <tr><td><code>asStateFlow()</code></td><td>Expone el flujo como solo lectura</td></tr>
+        <tr><td><code>collectAsState()</code></td><td>Convierte el flujo en estado de Compose</td></tr>
+        <tr><td>Estado privado</td><td><code>_x</code> mutable privado, <code>x</code> público inmutable</td></tr>
+        <tr><td>Reemplazar, no mutar</td><td>Para que <code>StateFlow</code> detecte el cambio</td></tr>
+        </table>
+    <div class="footer-inst"><span>MVVM</span><span>Clase 8 de 15</span></div>
+  </div>
+
+  <div class="slide">
+    <div class="header-inst"><span class="marca">Universidad de Caldas</span><span>Programación para Dispositivos Móviles</span></div>
+    <div class="kicker">Cierre</div>
+    <h1>Para la próxima clase</h1>
+
+        <ul>
+          <li>Completa el <strong>Taller 6</strong> (~6 horas de trabajo independiente)</li>
+          <li><strong>Clase 9:</strong> persistencia de datos local con Room</li>
+          <li>Trae tu <code>ANALISIS.md</code> con la predicción inicial y el diagnóstico del bug</li>
+        </ul>
+        <p><span class="badge oro">Antes de irte</span> Responde en una frase: ¿por qué el ViewModel sobrevive a la rotación?</p>
+    <div class="footer-inst"><span>MVVM</span><span>Clase 8 de 15</span></div>
+  </div>
+
+</div>
+<button id="prevBtn" class="nav-btn" onclick="cambiar(-1)">&#8249;</button>
+<button id="nextBtn" class="nav-btn" onclick="cambiar(1)">&#8250;</button>
+<div id="counter"></div>
+<script>
+  const slides = document.querySelectorAll('.slide');
+  let idx = 0;
+  function mostrar() {
+    slides.forEach((s, i) => s.classList.toggle('active', i === idx));
+    document.getElementById('counter').textContent = (idx + 1) + ' / ' + slides.length;
+  }
+  function cambiar(delta) {
+    idx = Math.max(0, Math.min(slides.length - 1, idx + delta));
+    mostrar();
+  }
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ') cambiar(1);
+    if (e.key === 'ArrowLeft') cambiar(-1);
+  });
+  mostrar();
+</script>
+</body>
+</html>

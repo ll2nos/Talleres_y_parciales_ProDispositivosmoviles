@@ -1,0 +1,25 @@
+# Archivos de IDE / builds de Android y Kotlin
+.idea/
+*.iml
+.gradle/
+build/
+out/
+captures/
+.externalNativeBuild/
+.cxx/
+local.properties
+
+# Artefactos de compilación
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+*.jar
+!**/gradle/wrapper/gradle-wrapper.jar
+*.keystore
+*.jks
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
